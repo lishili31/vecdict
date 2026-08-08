@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>墨墨查词 · Word Search</title>
+  <meta name="description" content="基于墨墨开放 API 的个人查词工具：释义、助记、例句">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-logo">📖</span>
+      <span class="brand-name">墨墨查词</span>
+      <span class="brand-en">WORD SEARCH</span>
+    </div>
+    <button id="settingsBtn" class="icon-btn" title="设置 Token" aria-label="设置">⚙</button>
+  </header>
+
+  <main>
+    <!-- 搜索区 -->
+    <section class="hero">
+      <h1 class="hero-title">查一个词，<span class="grad-text">温故知新</span></h1>
+      <p class="hero-sub">检索你在墨墨背单词中沉淀的释义 · 助记 · 例句</p>
+
+      <form id="searchForm" class="search-form" autocomplete="off">
+        <input id="searchInput" type="text" placeholder="输入英文单词，回车查询…" spellcheck="false" autofocus>
+        <button type="submit" id="searchBtn" class="search-btn">
+          <span class="btn-label">查询</span>
+          <span class="btn-spinner" aria-hidden="true"></span>
+        </button>
+      </form>
+
+      <div class="chips" id="chips"></div>
+      <p id="hint" class="hint"></p>
+    </section>
+
+    <!-- 结果区 -->
+    <section id="result" class="result hidden">
+
+      <div id="wordCard" class="card word-card hidden">
+        <div class="word-head">
+          <div class="word-left">
+            <span id="wordSpelling" class="word-spelling"></span>
+            <span id="wordPhonetic" class="word-phonetic hidden"></span>
+          </div>
+          <div class="word-actions">
+            <button id="pronounceUsBtn" class="speak-btn" title="美式发音">🇺🇸 <span>美音</span></button>
+            <button id="pronounceUkBtn" class="speak-btn" title="英式发音">🇬🇧 <span>英音</span></button>
+          </div>
+        </div>
+      </div>
+
+      <div id="dictCard" class="card reveal hidden">
+        <h2 class="card-title"><span class="title-ico">📕</span>词典释义
+          <span class="src-badge">有道词典</span>
+          <span id="dictCount" class="count"></span>
+        </h2>
+        <ul id="dictList" class="item-list"></ul>
+        <div id="dictEnBlock" class="sub-block hidden">
+          <div class="sub-title">英英释义</div>
+          <ul id="dictEnList" class="item-list"></ul>
+        </div>
+      </div>
+
+      <div id="sentenceCard" class="card reveal hidden">
+        <h2 class="card-title"><span class="title-ico">💬</span>双语例句
+          <span class="src-badge">有道词典</span>
+          <span id="sentenceCount" class="count"></span>
+        </h2>
+        <ul id="sentenceList" class="item-list"></ul>
+      </div>
+
+      <div id="ydPhraseCard" class="card reveal hidden">
+        <h2 class="card-title"><span class="title-ico">🔗</span>词组短语
+          <span class="src-badge">有道词典</span>
+          <span id="ydPhraseCount" class="count"></span>
+        </h2>
+        <ul id="ydPhraseList" class="item-list"></ul>
+      </div>
+
+      <div id="interpretationCard" class="card reveal hidden">
+        <h2 class="card-title"><span class="title-ico">🟣</span>我的释义 <span id="intCount" class="count"></span></h2>
+        <ul id="interpretationList" class="item-list"></ul>
+      </div>
+
+      <div id="noteCard" class="card reveal hidden">
+        <h2 class="card-title"><span class="title-ico">💡</span>我的助记 <span id="noteCount" class="count"></span></h2>
+        <ul id="noteList" class="item-list"></ul>
+      </div>
+
+      <div id="phraseCard" class="card reveal hidden">
+        <h2 class="card-title"><span class="title-ico">✍️</span>我的例句 <span id="phraseCount" class="count"></span></h2>
+        <ul id="phraseList" class="item-list"></ul>
+      </div>
+
+      <div id="empty" class="empty hidden">
+        <div class="empty-emoji">🕊️</div>
+        <p id="emptyText">这个词还没有你的记录</p>
+      </div>
+
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>Powered by 墨墨开放 API · 词典释义 / 双语例句 / 词组短语来自有道词典公开接口</p>
+  </footer>
+
+  <!-- 设置弹窗 -->
+  <div id="settingsModal" class="modal hidden">
+    <div class="modal-box">
+      <h2>设置 Token</h2>
+      <p class="modal-desc">
+        填写墨墨开放 API 的请求凭证。获取方式：<b>墨墨背单词 App → 我的 → 更多设置 → 实验功能 → 开放 API</b>，
+        或访问
+        <a href="https://open.maimemo.com/open/api/v1/tokens/openapi" target="_blank" rel="noopener">token 获取页</a>。
+        Token 仅保存在你的服务器本地。
+      </p>
+      <input id="tokenInput" type="text" placeholder="粘贴 token" autocomplete="off" spellcheck="false">
+      <p id="tokenStatus" class="token-status"></p>
+      <div class="modal-actions">
+        <button id="saveTokenBtn" class="primary-btn">保存</button>
+        <button id="closeModalBtn" class="plain-btn">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
