@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>智能中英词典 · 关键词搜索</title>
+  <meta name="description" content="基于 ECDICT 开源词库的中英词典：英文关键词搜索、模糊匹配、中文释义反向查询、自动补全">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-logo">📖</span>
+      <span class="brand-name">智能中英词典</span>
+      <span class="brand-en">KEYWORD DICTIONARY</span>
+    </div>
+    <span class="badge-stack">ECDICT 开源词库</span>
+  </header>
+
+  <main>
+    <!-- 搜索区 -->
+    <section class="hero">
+      <h1 class="hero-title">中英互查，<span class="grad-text">一击即中</span></h1>
+      <p class="hero-sub">输入英文单词或中文释义 · 模糊匹配 · 反向查询 · 自动补全</p>
+
+      <form id="searchForm" class="search-form" autocomplete="off">
+        <input id="searchInput" type="text" placeholder="输入英文单词或中文释义，回车查询…" spellcheck="false" autofocus>
+        <button type="submit" id="searchBtn" class="search-btn">
+          <span class="btn-label">搜索</span>
+          <span class="btn-spinner" aria-hidden="true"></span>
+        </button>
+        <div id="suggestBox" class="suggest hidden"></div>
+      </form>
+
+      <div class="chips" id="chips"></div>
+      <p id="modeHint" class="hint mode-hint hidden"></p>
+      <p id="hint" class="hint"></p>
+    </section>
+
+    <!-- 结果区 -->
+    <section id="result" class="result hidden">
+
+      <div id="wordCard" class="card word-card hidden">
+        <div class="word-head">
+          <div class="word-left">
+            <span id="wordSpelling" class="word-spelling"></span>
+            <span id="wordPhonetic" class="word-phonetic hidden"></span>
+          </div>
+          <div class="word-actions">
+            <button type="button" class="speak-btn" id="pronounceUsBtn" title="美式发音">🇺🇸 美音</button>
+            <button type="button" class="speak-btn" id="pronounceUkBtn" title="英式发音">🇬🇧 英音</button>
+          </div>
+        </div>
+        <div id="wordTags" class="word-tags"></div>
+      </div>
+
+      <div id="interpCard" class="card hidden">
+        <h2 class="card-title"><span class="title-ico">🀄</span>中文释义</h2>
+        <ul id="interpList" class="item-list"></ul>
+      </div>
+
+      <div id="defCard" class="card hidden">
+        <h2 class="card-title"><span class="title-ico">🇬🇧</span>英文释义</h2>
+        <ul id="defList" class="item-list"></ul>
+      </div>
+
+      <div id="exchangeCard" class="card hidden">
+        <h2 class="card-title"><span class="title-ico">🔀</span>词形变化</h2>
+        <div id="exchangeWrap" class="exchange-wrap"></div>
+      </div>
+
+      <div id="empty" class="empty hidden">
+        <div class="empty-emoji">🔍</div>
+        <p id="emptyText">未找到相关词条，试试更换关键词</p>
+      </div>
+
+      <div id="pager" class="pager hidden">
+        <button type="button" id="prevBtn" class="page-btn">← 上一页</button>
+        <span id="pageInfo" class="page-info"></span>
+        <button type="button" id="nextBtn" class="page-btn">下一页 →</button>
+      </div>
+
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>Powered by <a href="https://github.com/skywind3000/ECDICT" target="_blank" rel="noopener">ECDICT</a> 开源词库 · 发音来自有道词典公开接口</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

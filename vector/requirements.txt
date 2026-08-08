@@ -1,0 +1,4 @@
+# 向量化建库依赖（在【其他设备】上安装运行）
+# CPU 版 torch 安装方式见 README.md
+sentence-transformers>=2.7
+sqlite-vec>=0.1.6

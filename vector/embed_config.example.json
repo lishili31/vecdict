@@ -1,0 +1,7 @@
+{
+    "base_url": "https://api.openai.com/v1",
+    "model": "text-embedding-3-small",
+    "dimensions": null,
+    "api_key": "你的 API key（或设置环境变量 EMBED_API_KEY，二选一）",
+    "batch_size": 32
+}
