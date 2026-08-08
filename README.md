@@ -64,7 +64,10 @@ python main.py              # 或 uvicorn main:app --host 0.0.0.0 --port 3000
 1. **配置云端嵌入 API**：参照 `vector/embed_config.example.json` 创建 `data/embed_config.json`
    （bge-m3 / 1024 维，支持 OpenAI 兼容的 `/embeddings` 接口），
    或设置环境变量 `EMBED_API_KEY`
-2. **生成向量库**（可在任意设备执行）：
+2. **获取向量库**：
+   - 常用词向量库（4.2 万高频词）已通过 Git LFS 随仓库托管，克隆后执行
+     `git lfs pull` 即可获得 `data/vectors_common.db`（无需自己建库）
+   - 如需全量 77 万词条向量库，可自行构建（可在任意设备执行）：
    ```bash
    cd vector && pip install -r requirements.txt
    python export_data.py        # ecdict.db → data/vector_input.jsonl
@@ -92,7 +95,7 @@ python main.py              # 或 uvicorn main:app --host 0.0.0.0 --port 3000
 ├── backend/                 # 关键词搜索、自动补全、数据库连接
 ├── vector/                  # 向量化：导出、建库（其他设备运行）、查询端、嵌入 API 客户端
 ├── static/                  # 前端页面
-├── data/                    # 数据库、向量库、嵌入 API 配置（gitignore，不入库）
+├── data/                    # 数据库、向量库、嵌入 API 配置（向量库经 Git LFS 托管，凭证等 gitignore）
 ```
 
 ## 部署参考
