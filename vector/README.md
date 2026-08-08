@@ -9,7 +9,7 @@
 | 语义查询 | 服务器 | ✅ API 已就绪，等向量库回传后自动启用 |
 
 ⚠️ 建库与查询必须使用**同一个模型**（bge-m3），否则向量空间不一致、检索无效。
-服务器查询端已按 rag 项目配置对接同款 bge-m3 嵌入 API（华为云 ModelArts MaaS，
+服务器查询端已按 rag 项目配置对接同款 bge-m3 嵌入 API（云端 OpenAI 兼容服务，
 `data/embed_config.json`，已 gitignore）。
 
 ---

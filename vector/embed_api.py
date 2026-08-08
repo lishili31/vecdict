@@ -10,7 +10,7 @@
 
 配置（data/embed_config.json）：
 {
-    "base_url": "https://api.siliconflow.cn/v1",
+    "base_url": "https://your-provider.example.com/v1",
     "model": "bge-m3",
     "dimensions": 1024,        // base64 解码时的维度校验
     "send_dim": false,          // 是否向接口发送 dimensions 参数
