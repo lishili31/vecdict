@@ -66,7 +66,8 @@ python main.py              # 或 uvicorn main:app --host 0.0.0.0 --port 3000
    或设置环境变量 `EMBED_API_KEY`
 2. **获取向量库**：
    - 常用词向量库（4.2 万高频词）已通过 Git LFS 随仓库托管，克隆后执行
-     `git lfs pull` 即可获得 `data/vectors_common.db`（无需自己建库）
+     `git lfs pull` 即可获得 `data/vectors_common.db`（无需自己建库；
+     需先安装 Git LFS，见 https://git-lfs.com/）
    - 如需全量 77 万词条向量库，可自行构建（可在任意设备执行）：
    ```bash
    cd vector && pip install -r requirements.txt
@@ -104,7 +105,7 @@ python main.py              # 或 uvicorn main:app --host 0.0.0.0 --port 3000
 
 ```nginx
 location /dict/ {
-    proxy_pass http://127.0.0.1:3015/;
+    proxy_pass http://127.0.0.1:3000/;  # 端口与 DICT_PORT 保持一致
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
