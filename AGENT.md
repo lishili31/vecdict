@@ -27,13 +27,10 @@ wordsearch/
 │   ├── build_vectors.py     # 建库脚本（在【用户其他设备】上运行，用户手动维护，勿改）
 │   └── README.md            # 向量库 schema 约定与分工说明（改查询逻辑时需同步）
 ├── static/                  # 当前词典前端（index.html / app.js / style.css），FastAPI 直出磁盘
-├── public/ + server.js      # 【旧】墨墨查词站（端口 3014），与本项目无关，保留未动
 ├── data/                    # 数据库与密钥（均 gitignore）
 │   ├── ecdict.db            # 主词典库（含 FTS5 索引）
 │   ├── vectors_common.db    # 常用词向量子集（4.2 万条，用户回传，查询端优先使用）
-│   ├── embed_config.json    # 嵌入 API 配置（权限 600，勿提交，内容勿外泄）
-│   └── token.json           # 旧墨墨站凭证，勿提交
-├── document.yaml            # 旧墨墨站 OpenAPI 文档，与本项目无关
+│   └── embed_config.json    # 嵌入 API 配置（权限 600，勿提交，内容勿外泄）
 └── requirements.txt         # fastapi / uvicorn[standard]
 ```
 
@@ -96,6 +93,8 @@ ECDICT CSV 中的换行以**字面 `\n`（反斜杠+n 两个字符）**存储，
   ```
   启动方式（勿改用 `uvicorn` 可执行文件）：
   `.venv/bin/python -m uvicorn main:app --host 127.0.0.1 --port 3015`
+- **开发环境**：直接 `python main.py` 即可（`config.py` 默认 `0.0.0.0:3000`，
+  可用环境变量 `DICT_HOST` / `DICT_PORT` 覆盖；pm2 生产端口 3015 由命令行显式指定，不受影响）
 - **静态文件**由 FastAPI StaticFiles 直出磁盘，改 `static/` 下文件**无需重启服务**，
   浏览器强刷（Ctrl/Cmd+Shift+R）即可。
 - **改后端**后需重启：`su - deploy -c 'cd /home/deploy/code/wordsearch && pm2 restart dict-web --update-env'`

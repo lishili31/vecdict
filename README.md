@@ -4,6 +4,8 @@
 支持英文关键词/模糊搜索、中文释义反向查询、自动补全，并通过 **向量化模型** 提供
 语义搜索（用描述找单词）与同近义词推荐。
 
+> 🖥️ **在线体验**：<https://www.stringandstick.cn/dict/>
+
 ## 功能特性
 
 - 🔍 **关键词搜索**：英文精确匹配、前缀匹配、编辑距离 ≤2 的拼写纠错；按词频/柯林斯星级排序
@@ -46,12 +48,14 @@ python build_db.py          # 生成 data/ecdict.db（含 FTS5 索引）
 
 ### 2. 启动服务
 
+服务默认监听 `0.0.0.0:3000`，端口可通过环境变量 `DICT_PORT` 自定义（如 `DICT_PORT=8080 python main.py`）：
+
 ```bash
 pip install -r requirements.txt
-uvicorn main:app --host 0.0.0.0 --port 3015
+python main.py              # 或 uvicorn main:app --host 0.0.0.0 --port 3000
 ```
 
-打开 http://localhost:3015 即可使用关键词搜索。
+打开 http://localhost:3000 即可使用关键词搜索。
 
 ### 3.（可选）启用向量语义搜索
 
@@ -89,7 +93,6 @@ uvicorn main:app --host 0.0.0.0 --port 3015
 ├── vector/                  # 向量化：导出、建库（其他设备运行）、查询端、嵌入 API 客户端
 ├── static/                  # 前端页面
 ├── data/                    # 数据库、向量库、嵌入 API 配置（gitignore，不入库）
-└── public/ + server.js      # 早期版本（旧墨墨查词站），已由 static/ 取代
 ```
 
 ## 部署参考

@@ -1,10 +1,16 @@
 # -*- coding: utf-8 -*-
 """词典应用配置"""
+import os
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 DB_PATH = ROOT / "data" / "ecdict.db"
 STATIC_DIR = ROOT / "static"
+
+# 服务监听配置：默认 0.0.0.0:3000，可用环境变量 DICT_HOST / DICT_PORT 覆盖
+# （pm2 / 生产部署通过命令行显式指定端口，不受此处影响）
+HOST = os.environ.get("DICT_HOST", "0.0.0.0")
+PORT = int(os.environ.get("DICT_PORT", "3000"))
 
 DEFAULT_LIMIT = 20
 MAX_LIMIT = 100

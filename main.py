@@ -93,3 +93,12 @@ def index():
 
 # 静态资源（API 路由已优先注册）
 app.mount("/", StaticFiles(directory=str(STATIC_DIR)), name="static")
+
+
+if __name__ == "__main__":
+    # 直接运行：python main.py（默认 0.0.0.0:3000，可用 DICT_HOST/DICT_PORT 覆盖）
+    import uvicorn
+
+    from config import HOST, PORT
+
+    uvicorn.run(app, host=HOST, port=PORT)
