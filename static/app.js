@@ -30,6 +30,11 @@ const els = {
   defList: $('#defList'),
   exchangeCard: $('#exchangeCard'),
   exchangeWrap: $('#exchangeWrap'),
+  semanticBtn: $('#semanticBtn'),
+  similarBtn: $('#similarBtn'),
+  vectorCard: $('#vectorCard'),
+  vectorTitle: $('#vectorTitle'),
+  vectorList: $('#vectorList'),
   pager: $('#pager'),
   prevBtn: $('#prevBtn'),
   nextBtn: $('#nextBtn'),
@@ -320,6 +325,7 @@ async function doSearch(q, offset) {
   currentOffset = offset;
   hide(els.empty);
   hide(els.result);
+  hide(els.vectorCard);
   hide(els.suggestBox);
   suggestItems = [];
   els.searchBtn.classList.add('loading');
@@ -391,6 +397,98 @@ els.prevBtn.addEventListener('click', () => {
 
 els.nextBtn.addEventListener('click', () => {
   if (currentOffset + PAGE_SIZE < currentTotal) doSearch(currentQuery, currentOffset + PAGE_SIZE);
+});
+
+/* ---------------- 向量语义检索 ---------------- */
+
+async function fetchVector(path) {
+  const { status, data } = await apiGet(path);
+  if (status === 503) {
+    setHint('语义搜索暂不可用：向量库尚未就绪', 'error');
+    return null;
+  }
+  if (status !== 200 || !data || !Array.isArray(data.results)) {
+    setHint(status ? `语义搜索失败（HTTP ${status}）` : '网络异常，请稍后重试', 'error');
+    return null;
+  }
+  return data.results;
+}
+
+function renderVectorList(entries, title) {
+  hide(els.wordCard);
+  hide(els.interpCard);
+  hide(els.defCard);
+  hide(els.exchangeCard);
+  hide(els.pager);
+  els.vectorTitle.textContent = title;
+  show(els.vectorCard);
+  els.vectorList.innerHTML = entries.map((e) => {
+    const lines = interpLines(e.text ? [e.text] : []).slice(1); // 首行为单词本身，跳过
+    const preview = lines.find((l) => !l.startsWith('[')) || lines[0] || '';
+    const sim = Math.max(0, Math.round(100 * (1 - (e.distance || 0) / 2)));
+    return `
+      <li class="item">
+        <div class="item-main">
+          <button type="button" class="link-word" data-word="${escapeHtml(e.word)}">${escapeHtml(e.word)}</button>
+          <div class="interp-preview">${escapeHtml(preview) || '—'}</div>
+          <div class="mini-tags">${tagHtml(e)}<span class="tag tag-dist">相似度 ${sim}%</span></div>
+        </div>
+      </li>`;
+  }).join('');
+}
+
+async function semanticSearch(q) {
+  q = q.trim();
+  if (!q) return;
+  hide(els.empty);
+  hide(els.result);
+  hide(els.suggestBox);
+  suggestItems = [];
+  els.semanticBtn.disabled = true;
+  setHint(`正在语义检索 “${q}”…`);
+  const results = await fetchVector(`api/semantic?q=${encodeURIComponent(q)}&limit=10`);
+  els.semanticBtn.disabled = false;
+  if (!results) return;
+  if (!results.length) {
+    els.emptyText.textContent = `语义检索未找到与 “${q}” 相关的词条`;
+    show(els.empty);
+    setHint(DEFAULT_HINT);
+    return;
+  }
+  show(els.result);
+  renderVectorList(results, `语义搜索 · “${q}” 相关词条`);
+  setHint('语义搜索：按向量相似度排序，点击词条查看详解');
+}
+
+els.semanticBtn.addEventListener('click', () => {
+  semanticSearch(els.input.value);
+});
+
+els.similarBtn.addEventListener('click', async () => {
+  const word = els.wordSpelling.textContent;
+  if (!word) return;
+  hide(els.empty);
+  hide(els.result);
+  els.similarBtn.disabled = true;
+  setHint(`正在查找 “${word}” 的同近义词…`);
+  const results = await fetchVector(`api/similar?word=${encodeURIComponent(word)}&limit=10`);
+  els.similarBtn.disabled = false;
+  if (!results) return;
+  if (!results.length) {
+    setHint(`未找到 “${word}” 的同近义词`, 'error');
+    return;
+  }
+  show(els.result);
+  renderVectorList(results, `同近义词 · ${word}`);
+  setHint('同近义词：按向量相似度排序，点击词条查看详解');
+});
+
+els.vectorList.addEventListener('click', (e) => {
+  const btn = e.target.closest('.link-word');
+  if (!btn) return;
+  els.input.value = btn.dataset.word;
+  hide(els.suggestBox);
+  doSearch(btn.dataset.word, 0);
 });
 
 /* ---------------- 发音 ---------------- */

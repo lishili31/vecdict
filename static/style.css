@@ -218,6 +218,28 @@ main {
 .search-btn.loading .btn-spinner { display: block; }
 .search-btn.loading .btn-label { display: none; }
 
+.semantic-btn {
+  flex: none;
+  height: 52px;
+  padding: 0 18px;
+  border: 1.5px solid rgba(109, 123, 248, 0.55);
+  border-radius: 16px;
+  background: var(--chip-bg);
+  color: var(--accent);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.semantic-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: rgba(109, 123, 248, 0.12);
+  box-shadow: 0 6px 18px rgba(91, 99, 245, 0.25);
+}
+
+.semantic-btn:disabled { opacity: 0.65; cursor: default; }
+
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* 自动补全下拉 */
@@ -403,6 +425,7 @@ main {
 .tag-oxford { color: #10b981; background: rgba(16, 185, 129, 0.10); border-color: rgba(16, 185, 129, 0.28); }
 .tag-exam { color: #db2777; background: rgba(236, 72, 153, 0.10); border-color: rgba(236, 72, 153, 0.26); }
 .tag-freq { color: #0284c7; background: rgba(14, 165, 233, 0.10); border-color: rgba(14, 165, 233, 0.28); }
+.tag-dist { color: #7c3aed; background: rgba(124, 58, 237, 0.10); border-color: rgba(124, 58, 237, 0.28); }
 
 /* 区块标题 */
 .card-title {
@@ -540,6 +563,7 @@ main {
   .hero-sub { font-size: 13px; }
   .search-form { flex-direction: column; }
   .search-btn { min-width: 100%; }
+  .semantic-btn { min-width: 100%; }
   .word-spelling { font-size: 36px; }
   .card { padding: 18px 16px; }
   .brand-en { display: none; }

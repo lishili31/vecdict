@@ -5,11 +5,18 @@ data/embed_config.json
 # 数据文件（可由脚本重建）
 data/ecdict.csv
 data/ecdict.db
+data/ecdict.db-shm
+data/ecdict.db-wal
 data/vector_input.jsonl
 data/vectors*.db
+data/vectors*.db-shm
+data/vectors*.db-wal
 
 # Python 虚拟环境
 .venv/
 
 # Python 字节码缓存
 __pycache__/
+
+# 建库打包产物
+vector-build-package.zip

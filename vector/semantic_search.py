@@ -8,6 +8,7 @@
 """
 import json
 import sqlite3
+import threading
 from pathlib import Path
 
 from config import DB_PATH
@@ -32,55 +33,63 @@ class SemanticSearch:
         self._conn = None
         self._dim = None
         self._client = None
+        # FastAPI 线程池可能用不同线程处理请求，连接需跨线程复用并加锁串行化
+        self._lock = threading.Lock()
 
     # ---- 初始化 ----
 
     def _ensure_ready(self):
-        if not self.db_path.exists():
-            raise SemanticSearchError(
-                "向量库尚未建立：请在其它设备运行 build_vectors.py 生成 "
-                "vectors.db 并放回 data/ 目录"
-            )
-        if self._conn is None:
-            import sqlite_vec
-            self._conn = sqlite3.connect(self.db_path)
-            self._conn.enable_load_extension(True)
-            sqlite_vec.load(self._conn)
-            self._conn.enable_load_extension(False)
-            self._conn.row_factory = sqlite3.Row
-            # 从 vec0 表定义探测维度（float[N]）
-            row = self._conn.execute(
-                "SELECT sql FROM sqlite_master WHERE type='table' AND name='vec_entries'"
-            ).fetchone()
-            try:
-                self._dim = int(row["sql"].split("float[")[1].split("]")[0])
-            except (IndexError, ValueError, TypeError) as e:
-                raise SemanticSearchError(f"向量库表结构异常：{e}") from e
-        if self._client is None:
-            try:
-                self._client = get_client()
-            except EmbeddingError as e:
-                raise SemanticSearchError(str(e)) from e
+        with self._lock:
+            if self._conn is None:
+                # 向量库回传可能晚于进程启动，初始化前重新探测优先级
+                if VECTOR_DB_COMMON.exists():
+                    self.db_path = VECTOR_DB_COMMON
+                if not self.db_path.exists():
+                    raise SemanticSearchError(
+                        "向量库尚未建立：请在其它设备运行 build_vectors.py 生成 "
+                        "vectors.db 并放回 data/ 目录"
+                    )
+                import sqlite_vec
+                self._conn = sqlite3.connect(self.db_path, check_same_thread=False)
+                self._conn.enable_load_extension(True)
+                sqlite_vec.load(self._conn)
+                self._conn.enable_load_extension(False)
+                self._conn.row_factory = sqlite3.Row
+                # 从 vec0 表定义探测维度（float[N]）
+                row = self._conn.execute(
+                    "SELECT sql FROM sqlite_master WHERE type='table' AND name='vec_entries'"
+                ).fetchone()
+                try:
+                    self._dim = int(row["sql"].split("float[")[1].split("]")[0])
+                except (IndexError, ValueError, TypeError) as e:
+                    raise SemanticSearchError(f"向量库表结构异常：{e}") from e
+            if self._client is None:
+                try:
+                    self._client = get_client()
+                except EmbeddingError as e:
+                    raise SemanticSearchError(str(e)) from e
 
     # ---- 查询 ----
 
     def _knn(self, vector, k: int):
         """向量检索，返回 [(id, distance)]"""
         self._ensure_ready()
-        rows = self._conn.execute(
-            "SELECT rowid, distance FROM vec_entries "
-            "WHERE embedding MATCH ? AND k = ? ORDER BY distance",
-            (json.dumps(vector), k),
-        ).fetchall()
+        with self._lock:
+            rows = self._conn.execute(
+                "SELECT rowid, distance FROM vec_entries "
+                "WHERE embedding MATCH ? AND k = ? ORDER BY distance",
+                (json.dumps(vector), k),
+            ).fetchall()
         return [(r["rowid"], r["distance"]) for r in rows]
 
     def _meta(self, ids):
         if not ids:
             return {}
         marks = ",".join("?" * len(ids))
-        rows = self._conn.execute(
-            f"SELECT * FROM meta WHERE id IN ({marks})", ids
-        ).fetchall()
+        with self._lock:
+            rows = self._conn.execute(
+                f"SELECT * FROM meta WHERE id IN ({marks})", ids
+            ).fetchall()
         return {r["id"]: dict(r) for r in rows}
 
     def search(self, query: str, k: int = 10):

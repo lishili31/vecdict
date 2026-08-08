@@ -23,7 +23,7 @@
     <!-- 搜索区 -->
     <section class="hero">
       <h1 class="hero-title">中英互查，<span class="grad-text">一击即中</span></h1>
-      <p class="hero-sub">输入英文单词或中文释义 · 模糊匹配 · 反向查询 · 自动补全</p>
+      <p class="hero-sub">输入英文单词或中文释义 · 模糊匹配 · 反向查询 · 语义搜索 · 同近义词推荐</p>
 
       <form id="searchForm" class="search-form" autocomplete="off">
         <input id="searchInput" type="text" placeholder="输入英文单词或中文释义，回车查询…" spellcheck="false" autofocus>
@@ -31,6 +31,7 @@
           <span class="btn-label">搜索</span>
           <span class="btn-spinner" aria-hidden="true"></span>
         </button>
+        <button type="button" id="semanticBtn" class="semantic-btn" title="用中文或英文描述意思，返回语义最接近的单词">🧠 语义搜索</button>
         <div id="suggestBox" class="suggest hidden"></div>
       </form>
 
@@ -51,6 +52,7 @@
           <div class="word-actions">
             <button type="button" class="speak-btn" id="pronounceUsBtn" title="美式发音">🇺🇸 美音</button>
             <button type="button" class="speak-btn" id="pronounceUkBtn" title="英式发音">🇬🇧 英音</button>
+            <button type="button" class="speak-btn" id="similarBtn" title="推荐与当前单词意思相近的词">🔗 同近义词</button>
           </div>
         </div>
         <div id="wordTags" class="word-tags"></div>
@@ -69,6 +71,11 @@
       <div id="exchangeCard" class="card hidden">
         <h2 class="card-title"><span class="title-ico">🔀</span>词形变化</h2>
         <div id="exchangeWrap" class="exchange-wrap"></div>
+      </div>
+
+      <div id="vectorCard" class="card hidden">
+        <h2 class="card-title"><span id="vectorIco" class="title-ico">🧠</span><span id="vectorTitle">语义搜索</span></h2>
+        <ul id="vectorList" class="item-list"></ul>
       </div>
 
       <div id="empty" class="empty hidden">

@@ -2,18 +2,25 @@
 """
 云端 Embedding API 客户端（OpenAI 兼容格式）
 
-支持 OpenAI、智谱、阿里 DashScope、DeepSeek、vLLM 等兼容
-POST {base_url}/embeddings 接口的服务。
+对齐 rag 项目的 bge-m3 嵌入服务约定：
+- POST {base_url}/embeddings
+- encoding_format 支持 base64（默认，与 rag 项目一致）与 float
+- 可选发送 dimensions 参数（send_dim）
+- 返回向量兼容 base64 字符串与 float 数组两种格式
 
 配置（data/embed_config.json）：
 {
-    "base_url": "https://api.openai.com/v1",
-    "model": "text-embedding-3-small",
-    "dimensions": null,      // 可选，限制输出维度
-    "api_key": "sk-...",     // 可选，也可用环境变量 EMBED_API_KEY
+    "base_url": "https://api.siliconflow.cn/v1",
+    "model": "bge-m3",
+    "dimensions": 1024,        // base64 解码时的维度校验
+    "send_dim": false,          // 是否向接口发送 dimensions 参数
+    "use_base64": true,         // 请求 encoding_format 使用 base64
+    "api_key": "sk-...",        // 可选，也可用环境变量 EMBED_API_KEY
     "batch_size": 32
 }
 """
+import array
+import base64
 import json
 import os
 import time
@@ -32,7 +39,8 @@ class EmbeddingError(Exception):
 class EmbeddingClient:
     def __init__(self, base_url: str, api_key: str, model: str,
                  dimensions: int = None, batch_size: int = 32,
-                 timeout: int = 60, retries: int = 3):
+                 timeout: int = 120, retries: int = 3,
+                 use_base64: bool = True, send_dim: bool = False):
         self.base_url = base_url.rstrip("/")
         self.api_key = api_key
         self.model = model
@@ -40,6 +48,8 @@ class EmbeddingClient:
         self.batch_size = batch_size
         self.timeout = timeout
         self.retries = retries
+        self.use_base64 = use_base64
+        self.send_dim = send_dim
 
     # ---- 公开接口 ----
 
@@ -57,20 +67,42 @@ class EmbeddingClient:
     # ---- 内部 ----
 
     def _embed_batch(self, texts):
-        body = {"model": self.model, "input": texts}
-        if self.dimensions:
+        body = {
+            "model": self.model,
+            "input": texts,
+            "encoding_format": "base64" if self.use_base64 else "float",
+        }
+        if self.send_dim and self.dimensions:
             body["dimensions"] = self.dimensions
         data = self._post("/embeddings", body)
         try:
             items = sorted(data["data"], key=lambda x: x.get("index", 0))
-            vecs = [it["embedding"] for it in items]
         except (KeyError, TypeError) as e:
             raise EmbeddingError(f"响应格式异常：{e}") from e
+        vecs = [self._decode(it["embedding"]) for it in items]
         if len(vecs) != len(texts):
             raise EmbeddingError(
                 f"返回向量数 {len(vecs)} 与请求数 {len(texts)} 不一致"
             )
+        if self.dimensions:
+            for v in vecs:
+                if len(v) != self.dimensions:
+                    raise EmbeddingError(
+                        f"向量维度不符：期望 {self.dimensions}，实际 {len(v)}"
+                    )
         return vecs
+
+    @staticmethod
+    def _decode(raw):
+        """兼容 base64 字符串（float32 字节）与 float 数组"""
+        if isinstance(raw, str):
+            b = base64.b64decode(raw)
+            if len(b) % 4 != 0:
+                raise EmbeddingError("base64 向量字节数不是 4 的倍数")
+            return list(array.array("f", b))
+        if isinstance(raw, (list, tuple)):
+            return [float(v) for v in raw]
+        raise EmbeddingError(f"无法识别的向量类型：{type(raw)}")
 
     def _post(self, path, body):
         url = self.base_url + path
@@ -87,9 +119,7 @@ class EmbeddingClient:
                     return json.loads(resp.read().decode("utf-8"))
             except urllib.error.HTTPError as e:
                 detail = e.read().decode("utf-8", "replace")[:300]
-                last_err = EmbeddingError(
-                    f"HTTP {e.code}：{detail}"
-                )
+                last_err = EmbeddingError(f"HTTP {e.code}：{detail}")
                 if e.code in (400, 401, 403, 404):
                     raise last_err  # 配置错误，重试无意义
             except (urllib.error.URLError, TimeoutError, ConnectionError) as e:
@@ -124,4 +154,6 @@ def get_client(cfg: dict = None) -> EmbeddingClient:
         model=cfg["model"],
         dimensions=cfg.get("dimensions"),
         batch_size=cfg.get("batch_size", 32),
+        use_base64=cfg.get("use_base64", True),
+        send_dim=cfg.get("send_dim", False),
     )

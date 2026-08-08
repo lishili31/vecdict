@@ -2,68 +2,62 @@
 
 词典应用接入向量语义搜索的分工：
 
-| 环节 | 设备 | 脚本 |
+| 环节 | 设备 | 状态 |
 |------|------|------|
-| 数据导出 | 服务器 | `vector/export_data.py`（已生成 `data/vector_input.jsonl`） |
-| 向量建库 | **你的其他设备** | `vector/build_vectors.py` |
-| 语义查询 | 服务器（云端 API 编码，本地不跑模型） | `/api/semantic`、`/api/similar` |
+| 数据导出 | 服务器 | ✅ 已生成 `data/vector_input.jsonl`（77 万词条） |
+| 向量建库 | **你的其他设备** | 🔄 你本地运行中（bge-m3 / 1024 维，脚本已自行适配） |
+| 语义查询 | 服务器 | ✅ API 已就绪，等向量库回传后自动启用 |
 
-⚠️ 建库与查询使用**同一个云端模型**，否则向量空间不一致、检索无效。
+⚠️ 建库与查询必须使用**同一个模型**（bge-m3），否则向量空间不一致、检索无效。
+服务器查询端已按 rag 项目配置对接同款 bge-m3 嵌入 API（华为云 ModelArts MaaS，
+`data/embed_config.json`，已 gitignore）。
 
 ---
 
-## 一、服务器端（已完成）
+## 一、服务器端现状
 
-```bash
-# 导出全量建库数据（77 万词条，含 word + 中英文释义 + 词频）
-python3 vector/export_data.py
-# 输出：data/vector_input.jsonl
+- 查询 API：`/dict/api/semantic`（描述→单词）、`/dict/api/similar`（同近义词）
+- 向量库缺失时返回 503 提示；`data/vectors_common.db` 存在时优先使用
+- 服务由 **deploy 用户 pm2** 托管（进程名 `dict-web`）：
+  ```bash
+  sudo -u deploy pm2 status dict-web
+  sudo -u deploy pm2 logs dict-web
+  sudo -u deploy pm2 restart dict-web
+  ```
+
+## 二、向量库格式约定（建库脚本输出必须匹配）
+
+查询端 `vector/semantic_search.py` 依赖以下 schema，建库脚本请按此输出：
+
+```sql
+-- 向量表（维度 = 模型输出维度 1024，必须与查询端 API 一致）
+CREATE VIRTUAL TABLE vec_entries USING vec0(embedding float[1024]);
+
+-- 元数据表（rowid 从 1 开始，与 vec_entries.rowid 一一对应）
+CREATE TABLE meta (
+    id       INTEGER PRIMARY KEY,   -- = vec_entries.rowid
+    word     TEXT NOT NULL,         -- 英文单词
+    text     TEXT NOT NULL,         -- 嵌入文本（word + 中文释义 + 英文释义）
+    frq      INTEGER DEFAULT 0,
+    collins  INTEGER DEFAULT 0,
+    oxford   INTEGER DEFAULT 0,
+    bnc      INTEGER DEFAULT 0,
+    tag      TEXT DEFAULT ''
+);
 ```
 
-查询 API 已就绪（`/dict/api/semantic`、`/dict/api/similar`），
-在向量库与 API 配置就绪前返回 503 提示。
+其他约定：
+- 向量为 **float32 列表**（JSON 数组文本形式插入，如 `"[0.1,0.2,...]"`）
+- 建议向量做 **L2 归一化**（与云端 bge-m3 API 输出一致，模长=1）
+- 文件为 SQLite 格式（sqlite-vec 扩展），回传后放到服务器 `data/` 目录
 
-## 二、你的设备上建库
+## 三、回传与启用
 
-### 1. 准备
+把生成的 `vectors_common.db`（或 `vectors.db`）拷回服务器
+`/home/deploy/code/wordsearch/data/` 目录即可，无需重启服务：
+`/api/semantic`、`/api/similar` 立即生效（优先使用 `vectors_common.db`）。
 
-- 拿到 `data/vector_input.jsonl`（与代码一并拷贝过去）
-- Python 3.9+，`pip install -r vector/requirements.txt`（仅 sqlite-vec，**无需任何本地模型**）
-
-### 2. 配置云端 Embedding API
-
-把 `vector/embed_config.example.json` 复制为 `data/embed_config.json`，
-填写你的 API 服务商信息：
-
-```json
-{
-    "base_url": "https://api.openai.com/v1",
-    "model": "text-embedding-3-small",
-    "dimensions": null,
-    "api_key": "sk-xxx（或设置环境变量 EMBED_API_KEY）",
-    "batch_size": 32
-}
-```
-
-`base_url` 为 OpenAI 兼容的 `/embeddings` 接口地址（OpenAI / 智谱 / DashScope / vLLM 等均可）。
-
-### 3. 建库
-
-```bash
-# 推荐先建常用子集（frq>0，约 4.4 万条，费用低、速度快，用于验证链路）
-python vector/build_vectors.py data/vector_input.jsonl data/vectors_common.db --min-frq 1
-
-# 再建全量（77 万条，API 调用次数 = 词条数 / batch_size，注意费用）
-python vector/build_vectors.py data/vector_input.jsonl data/vectors.db
-```
-
-### 4. 回传
-
-把生成的 `vectors_common.db`（和/或 `vectors.db`）拷回服务器
-`/home/deploy/code/wordsearch/data/` 目录，查询 API 自动启用
-（`vectors_common.db` 优先）。
-
-## 三、查询 API
+## 四、查询 API
 
 | 接口 | 说明 | 示例 |
 |------|------|------|
@@ -82,9 +76,10 @@ python vector/build_vectors.py data/vector_input.jsonl data/vectors.db
 }
 ```
 
-## 四、注意事项
+## 五、注意事项
 
-- 向量库大小：全量 77 万 × 模型维度 × 4B（如 1536 维 ≈ 4.7GB）；常用子集约 270MB
-- 服务器内存有限（1.7GB）：推荐常用子集；全量库查询会占用更多内存
-- API key 存于 `data/embed_config.json`（已 gitignore），也可用环境变量 `EMBED_API_KEY` 覆盖
+- 服务器内存 1.7GB：常用子集（约 4.4 万条）查询无压力；全量 77 万条
+  × 1024 维 × 4B ≈ 3.1GB，查询会占用大量内存，不建议放在本服务器查询
 - 换模型后必须重新建库（旧向量库与新查询向量不兼容）
+- API key 存于 `data/embed_config.json`（权限 600，已 gitignore），
+  也可用环境变量 `EMBED_API_KEY` 覆盖
