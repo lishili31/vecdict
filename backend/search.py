@@ -35,6 +35,8 @@ def parse_text_list(raw: str):
                 return [str(x).strip() for x in v if str(x).strip()]
         except (json.JSONDecodeError, TypeError):
             pass
+    # ECDICT CSV 中换行以字面 "\n"（两个字符）存储，归一化为真实换行
+    s = s.replace("\\n", "\n")
     return [line.strip() for line in s.split("\n") if line.strip()]
 
 

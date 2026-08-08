@@ -14,7 +14,7 @@ def _hint(translation: str, max_len: int = 26) -> str:
     """取翻译首行作为补全预览"""
     if not translation:
         return ""
-    first = translation.split("\n", 1)[0].strip()
+    first = translation.replace("\\n", "\n").split("\n", 1)[0].strip()
     if len(first) > max_len:
         first = first[:max_len] + "…"
     return first

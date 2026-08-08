@@ -225,7 +225,8 @@ function tagHtml(entry) {
 function interpLines(arr) {
   const out = [];
   (arr || []).forEach((text) => {
-    String(text).split('\n').forEach((line) => {
+    // ECDICT 数据中换行可能是真实换行，也可能是字面 "\n"（两个字符），统一归一化
+    String(text).replace(/\\n/g, '\n').split('\n').forEach((line) => {
       const t = line.trim();
       if (t) out.push(t);
     });
