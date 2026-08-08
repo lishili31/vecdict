@@ -8,9 +8,15 @@ data/ecdict.db
 data/ecdict.db-shm
 data/ecdict.db-wal
 data/vector_input.jsonl
-data/vectors*.db
-data/vectors*.db-shm
-data/vectors*.db-wal
+
+# 全量向量库（体积大，由各开发者自行构建）
+data/vectors.db
+data/vectors.db-shm
+data/vectors.db-wal
+
+# 常用词向量库由 Git LFS 托管，此处仅忽略其运行时临时文件
+data/vectors_common.db-shm
+data/vectors_common.db-wal
 
 # Python 虚拟环境
 .venv/
