@@ -1,2 +1,3 @@
 fastapi>=0.110
 uvicorn[standard]>=0.29
+sqlite-vec>=0.1.6    # 语义搜索 / 同近义词的向量 kNN
