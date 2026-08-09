@@ -120,6 +120,8 @@ location /dict/ {
 - [BGE-M3](https://github.com/FlagOpen/FlagEmbedding) — 多语言嵌入模型
 - 发音接口来自有道词典公开接口
 
+各第三方组件的许可证与版权声明见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+
 ## 许可证
 
 [MIT](LICENSE)
