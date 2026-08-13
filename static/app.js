@@ -45,7 +45,25 @@ const PAGE_SIZE = 20;
 const DEFAULT_HINT = '支持英文单词、模糊拼写与中文释义反向查询 · 回车搜索';
 const CJK_RE = /[\u4e00-\u9fff]/;
 
-const QUICK_WORDS = ['hello', '你好', 'serendipity', '坚持', 'persevere'];
+/* 示例词库：每次加载页面时随机抽取展示（后续可扩展为从搜索日志/词库动态提取） */
+const EXAMPLE_WORDS = [
+  // 英文单词
+  'hello', 'serendipity', 'persevere', 'resilience', 'eloquent',
+  'endeavor', 'gratitude', 'illuminate', 'nostalgia', 'optimize',
+  'profound', 'wanderlust', 'tranquil', 'vivid', 'cherish', 'thrive',
+  // 中文词汇
+  '你好', '坚持', '梦想', '奋斗', '勇气', '智慧', '温暖', '希望', '热爱', '自由',
+];
+
+/* 从示例词库中随机抽取 count 个不重复的词（Fisher-Yates 洗牌） */
+function pickExampleWords(count) {
+  const pool = EXAMPLE_WORDS.slice();
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  return pool.slice(0, count);
+}
 const TAG_NAMES = {
   zk: '中考', gk: '高考', cet4: '四级', cet6: '六级', ky: '考研',
   toefl: '托福', ielts: '雅思', gre: 'GRE',
@@ -97,7 +115,7 @@ function isChinese(s) {
 
 /* ---------------- 快捷词 ---------------- */
 
-els.chips.innerHTML = QUICK_WORDS.map(
+els.chips.innerHTML = pickExampleWords(5).map(
   (w) => `<button type="button" class="chip" data-word="${w}">${w}</button>`
 ).join('');
 
