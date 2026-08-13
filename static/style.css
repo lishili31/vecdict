@@ -153,6 +153,9 @@ main {
 
 .search-form {
   position: relative;
+  /* 提升层级：结果卡片带 backdrop-filter/transform，会形成 z-index:auto 的层叠上下文并按 DOM 顺序绘制在搜索区之上，
+     导致打开自动补全下拉时其底部圆角与边框被下方卡片遮挡；正 z-index 使整个搜索区（含下拉浮层）始终绘制在卡片之上 */
+  z-index: 1;
   display: flex;
   gap: 10px;
   margin-top: 26px;
